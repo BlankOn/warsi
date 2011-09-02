@@ -4,9 +4,15 @@ int main (string[] args)
 {     
     Gtk.init (ref args);
     
-    WarungAplikasi app  =  new WarsiWindow();
+	var app = new Unique.App ("id.or.blankonlinux.Warsi", null);
+	if (app.is_running ()) {
+		stdout.printf ("Warung Aplikasi is already running.\n");
+		return 0;
+	}
+
+    var warsi  =  new WarsiWindow();
     
-	app.main_window.show_all ();
+	warsi.main_window.show_all ();
     Gtk.main ();
 
     return 0;

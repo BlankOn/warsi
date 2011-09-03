@@ -2,7 +2,7 @@ using Gtk;
 
 int main (string[] args) 
 {     
-    Gtk.init (ref args);
+	Gtk.init (ref args);
     
 	var app = new Unique.App ("id.or.blankonlinux.Warsi", null);
 	if (app.is_running ()) {
@@ -10,10 +10,13 @@ int main (string[] args)
 		return 0;
 	}
 
-    var warsi  =  new WarsiWindow();
+	var warsi  =  new WarsiWindow();
     
 	warsi.main_window.show_all ();
-    Gtk.main ();
+	Gtk.main ();
 
-    return 0;
+	var db = new WarsiDatabase ();
+	db.GetCategories ();
+
+	return 0;
 }

@@ -1,16 +1,20 @@
 using GLib;
+using Gee;
 using Sqlite;
+
+public struct CategoryRow {
+	public string name;
+	public string comment;
+}
 
 public class WarsiDatabase : GLib.Object {
 
 	const string WARSIDB = "warsi.db";
 	private Database db;
-	private Statement stmt;
+	private Statement stmt;	
+	int rc;
 
 	public WarsiDatabase () {
-
-        int rc;
-
         if (!FileUtils.test (WARSIDB, FileTest.IS_REGULAR)) {
             stderr.printf ("Database %s does not exist or is directory\n", WARSIDB);
         }
@@ -32,103 +36,38 @@ public class WarsiDatabase : GLib.Object {
 //		}
 //	}
 
-	public void GetLastest () {
-		int rc;
-		int col, cols;
+//	public void GetLastest () {
 
-		const string QUERY = "select CategoryName from categories";
-		rc = db.prepare_v2(QUERY, -1, out stmt, null);
-		
-		if ( rc == 1 ) {
-			stderr.printf ("SQL error: %d, %s\n", rc, db.errmsg ());
-		} else {                        
-			cols = stmt.column_count();
-			do {
-				rc = stmt.step();
-				switch ( rc ) {
-					case Sqlite.DONE:
-						break;
-					case Sqlite.ROW:
-						for ( col = 0; col < cols; col++ ) {
-							string txt = stmt.column_text(col);
-                                                                
-							stdout.printf("%s\n", txt);
-						}
-						break;
-					default:
-						stderr.printf("Error: %d, %s\n", rc, db.errmsg ());
-						break;
-				}
-			} while ( rc == Sqlite.ROW );
-		}
-	}
+//	}
 
 //	public GetPopular () {
 //		
 //	}
 
-	public void GetCategories () {
-		int rc;
-		int col, cols;
+	public Gee.ArrayList<CategoryRow?> GetCategories () {
 
-		const string QUERY = "select CategoryName from categories where Parrent_ID = '0'";
+		const string QUERY = "select CategoryName, Comment from categories where Parrent_ID = '0'";
 		rc = db.prepare_v2(QUERY, -1, out stmt, null);
-		
+
+		Gee.ArrayList<CategoryRow?> all = new Gee.ArrayList<CategoryRow?> ();
+
 		if ( rc == 1 ) {
 			stderr.printf ("SQL error: %d, %s\n", rc, db.errmsg ());
-		} else {                        
-			cols = stmt.column_count();
-			do {
-				rc = stmt.step();
-				switch ( rc ) {
-					case Sqlite.DONE:
-						break;
-					case Sqlite.ROW:
-						for ( col = 0; col < cols; col++ ) {
-							string txt = stmt.column_text(col);
-                                                                
-							stdout.printf("%s\n", txt);
-						}
-						break;
-					default:
-						stderr.printf("Error: %d, %s\n", rc, db.errmsg ());
-						break;
-				}
-			} while ( rc == Sqlite.ROW );
-		}
+		} else {                        			
+			while (( rc = stmt.step() ) == Sqlite.ROW) {
+				CategoryRow row = CategoryRow ();
+				row.name = stmt.column_text (0);
+				row.comment = stmt.column_text (1);
+
+				all.add (row);
+			}
+		}								
+		return all;
 	}
 
-	public void GetSubCategory (int category) {
-		int rc;
-		int col, cols;
+//	public void GetSubCategory (int category) {
 
-		// FIXME: replace '1' with category variable
-		const string QUERY = "select CategoryName from categories where Parrent_ID = '1'";
-		rc = db.prepare_v2(QUERY, -1, out stmt, null);
-		
-		if ( rc == 1 ) {
-			stderr.printf ("SQL error: %d, %s\n", rc, db.errmsg ());
-		} else {                        
-			cols = stmt.column_count();
-			do {
-				rc = stmt.step();
-				switch ( rc ) {
-					case Sqlite.DONE:
-						break;
-					case Sqlite.ROW:
-						for ( col = 0; col < cols; col++ ) {
-							string txt = stmt.column_text(col);
-                                                                
-							stdout.printf("%s\n", txt);
-						}
-						break;
-					default:
-						stderr.printf("Error: %d, %s\n", rc, db.errmsg ());
-						break;
-				}
-			} while ( rc == Sqlite.ROW );
-		}
-	}
+//	}
 
 //	public GetItemsByCategory () {
 
@@ -138,7 +77,7 @@ public class WarsiDatabase : GLib.Object {
 
 //	}
 
-	string[] array_sort_string (string[] array) {
+	string[] SortStringArray (string[] array) {
 		bool swapped = true;
 		int j = 0;
 		string tmp;

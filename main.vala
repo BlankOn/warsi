@@ -15,8 +15,5 @@ int main (string[] args)
 	warsi.main_window.show_all ();
 	Gtk.main ();
 
-	var db = new WarsiDatabase ();
-	db.GetCategories ();
-
 	return 0;
 }

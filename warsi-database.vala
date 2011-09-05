@@ -46,8 +46,8 @@ public class WarsiDatabase : GLib.Object {
 
 	public Gee.ArrayList<CategoryRow?> GetCategories () {
 
-		const string QUERY = "select CategoryName, Comment from categories where Parrent_ID = '0'";
-		rc = db.prepare_v2(QUERY, -1, out stmt, null);
+		const string QUERY = "SELECT CategoryName, Comment FROM categories WHERE Parrent_ID = '0'";
+		rc = db.prepare_v2 (QUERY, -1, out stmt, null);
 
 		Gee.ArrayList<CategoryRow?> all = new Gee.ArrayList<CategoryRow?> ();
 
@@ -65,9 +65,25 @@ public class WarsiDatabase : GLib.Object {
 		return all;
 	}
 
-//	public void GetSubCategory (int category) {
+	public Gee.ArrayList<CategoryRow?> GetSubCategory (int Parrent_ID) {
+		rc = db.prepare_v2 ("SELECT CategoryName, Comment FROM categories WHERE Parrent_ID = ?", -1, out stmt);
+		rc = stmt.bind_int64(1, Parrent_ID);
+		
+		Gee.ArrayList<CategoryRow?> all = new Gee.ArrayList<CategoryRow?> ();
 
-//	}
+		if ( rc == 1 ) {
+			stderr.printf ("SQL error: %d, %s\n", rc, db.errmsg ());
+		} else {
+			while (( rc = stmt.step() ) == Sqlite.ROW) {
+				CategoryRow row = CategoryRow ();
+				row.name = stmt.column_text (0);
+				row.comment = stmt.column_text (1);
+
+				all.add (row);
+			}
+		}
+		return all;
+	}
 
 //	public GetItemsByCategory () {
 

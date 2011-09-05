@@ -37,7 +37,7 @@ public class WarsiWindow {
 		var db = new WarsiDatabase ();
 		var categories = db.GetCategories ();
 
-		var vbox_content = builder.get_object ("vbox_content") as Gtk.HBox;
+		var vbox_content = builder.get_object ("vbox_content") as Gtk.VBox;
 
 		foreach ( CategoryRow? category in categories ) {
 			var hbox = new HBox (false, 0);

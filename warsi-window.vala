@@ -4,6 +4,7 @@ public class WarsiWindow {
 	
 	public Gtk.Window	main_window	{get; set;}
 	private Gtk.Builder builder  =  new Gtk.Builder ();
+	private Gtk.VBox	vbox_content {get; set;}
 
 	public WarsiWindow () {
 		const string GLADE  =  "warsi.glade";
@@ -20,6 +21,7 @@ public class WarsiWindow {
                 builder.connect_signals (this);
 
 				ListCategories ();
+
         } catch (Error e) {
               	stderr.printf ("Could not load UI: %s\n", e.message);
         }
@@ -37,21 +39,43 @@ public class WarsiWindow {
 		var db = new WarsiDatabase ();
 		var categories = db.GetCategories ();
 
-		var vbox_content = builder.get_object ("vbox_content") as Gtk.VBox;
+		vbox_content = builder.get_object ("vbox_content") as Gtk.VBox;
 
 		foreach ( CategoryRow? category in categories ) {
-			var hbox = new HBox (false, 0);
-			var hbox2 = new HBox (false, 0);
+			CreateListCategories (category.name, category.comment);
+		}
+	}
 
-			var label_name = new Label (category.name);
-			var label_comment = new Label (category.comment);
+	private void CreateListCategories (string name, string comment) {
 
-			hbox2.pack_start (label_name, false, true, 0);
-			hbox2.pack_start (label_comment, false, true, 0);
+		var hbox = new HBox (false, 0);
+		var vbox = new VBox (false, 5);
 
-			vbox_content.pack_start (hbox, false, true, 0);
+		var label_name = new Label (name);
+		var label_comment = new Label (comment);
 
-			stdout.printf ("%s = %s", category.name, category.comment);
+		label_name.set_alignment ((float)0.05, (float)1.0);
+		label_comment.set_alignment ((float)0.05, (float)1.0);
+
+		vbox.pack_start (label_name, false, true, 0);
+		vbox.pack_start (label_comment, false, true, 0);
+
+		hbox.pack_start (vbox, false, true, 0);
+
+		var hseparator = new HSeparator ();
+
+		vbox_content.pack_start (hbox, false, true, 0);
+		vbox_content.pack_start (hseparator, false, true, 0);
+	}
+
+	public void ListSubCategories (string Parrent_ID) {
+		var db = new WarsiDatabase();
+		var subcategories = db.GetSubCategory ((int)Parrent_ID);
+
+		vbox_content = builder.get_object ("vbox_content") as Gtk.VBox;
+
+		foreach ( CategoryRow? category in subcategories ) {
+			CreateListCategories (category.name, category.comment);
 		}
 	}
 

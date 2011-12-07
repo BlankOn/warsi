@@ -35,14 +35,14 @@ public class WarsiArchiveWriter : GLib.Object {
 		this.archive = new Write ();
 	}
 
-	public WarsiArchiveWriter.from_file (string fileobj) {
+	public WarsiArchiveWriter.from_file (string fileobj) throws WarsiArchiveError {
 		this.archive = new Write ();
 
 		this.archive.set_compression_none();
 		this.archive.set_format_ar_bsd ();
 
 		if (this.archive.open_filename (fileobj) != Result.OK) {
-			GLib.stderr.printf ("%s\n", this.archive.error_string ());
+			throw new WarsiArchiveError.ARCHIVE_OPEN_ERROR ("%s", this.archive.error_string ());
 		}
 	}
 
@@ -50,7 +50,7 @@ public class WarsiArchiveWriter : GLib.Object {
 		this.write_archive (debobj);
 	}
 
-	public void create_metadata (Gee.HashMap<string, string> metadata) {
+	public void create_metadata (Gee.HashMap<string, string> metadata) throws WarsiArchiveError {
 		try {
 			var file = File.new_for_path (METADATA);
 			
@@ -63,7 +63,7 @@ public class WarsiArchiveWriter : GLib.Object {
 			foreach ( var metaitem in metadata.entries ) {
 				dos.put_string ("%s: %s\n".printf(metaitem.key, metaitem.value));
 			}
-		} catch (Error e) {
+		} catch (WarsiArchiveError e) {
 			GLib.stderr.printf ("%s\n", e.message);
 		}
 
@@ -74,7 +74,7 @@ public class WarsiArchiveWriter : GLib.Object {
 
 //	}
 
-//	public string md5_file(File file) throws Error {
+//	public string md5_file(File file) throws WarsiArchiveError {
 //		Checksum md5 = new Checksum(ChecksumType.MD5);
 //		uint8[] buffer = new uint8[64 * 1024];
 //		
@@ -89,14 +89,14 @@ public class WarsiArchiveWriter : GLib.Object {
 //		
 //		try {
 //		    fins.close(null);
-//		} catch (Error err) {
+//		} catch (WarsiArchiveError err) {
 //		    warning("Unable to close MD5 input stream for %s: %s", file.get_path(), err.message);
 //		}
 //		
 //		return md5.get_string();
 //	}
 
-	private void write_archive (string fileobj) {
+	private void write_archive (string fileobj) throws WarsiArchiveError {
 		var entry = new Entry ();
 		entry.set_pathname (fileobj);
 		Posix.Stat st;
@@ -105,7 +105,7 @@ public class WarsiArchiveWriter : GLib.Object {
 		entry.set_size (st.st_size);
 
 		if (this.archive.write_header (entry) != Result.OK) {
-			GLib.stderr.printf ("%s\n", this.archive.error_string ());
+			throw new WarsiArchiveError.ARCHIVE_WRITE_HEADER_ERROR ("%s", this.archive.error_string ());
 		}
 
 		var file = File.new_for_path (fileobj);
@@ -119,13 +119,13 @@ public class WarsiArchiveWriter : GLib.Object {
 		}
 	}
 
-	public void close () {
+	public void close () throws WarsiArchiveError {
 		if (this.archive.finish_entry () != Result.OK) {
-			GLib.stderr.printf ("%s\n", this.archive.error_string ());
+			throw new WarsiArchiveError.ARCHIVE_FINISH_ERROR ("%s", this.archive.error_string ());
 		}
 
 		if (this.archive.close () != Result.OK) {
-			GLib.stderr.printf ("%s\n", this.archive.error_string ());
+			throw new WarsiArchiveError.ARCHIVE_CLOSE_ERROR ("%s", this.archive.error_string ());
 		}
  	}
 }
@@ -140,14 +140,14 @@ public class WarsiArchiveReader : GLib.Object {
 		this.archive = new Read ();
 	}
 
-	public WarsiArchiveReader.from_file (string fileobj) {
+	public WarsiArchiveReader.from_file (string fileobj) throws WarsiArchiveError {
 		this.archive = new Read ();
 
 		this.archive.support_compression_all();
 		this.archive.support_format_ar ();
 
 		if (this.archive.open_filename (fileobj, 4096) != Result.OK) {
-			GLib.stderr.printf ("%s\n", this.archive.error_string ());
+			throw new WarsiArchiveError.ARCHIVE_OPEN_ERROR ("%s", this.archive.error_string ());
 		}
 	}
 
@@ -176,8 +176,8 @@ public class WarsiArchiveReader : GLib.Object {
 	}
 
 	public void close () {
-		if (this.archive.close () != Result.OK) {
-			GLib.stderr.printf ("%s\n", this.archive.error_string ());
+		if (this.archive.close () != Result.OK) throws WarsiArchiveError {
+			throw new WarsiArchiveError.ARCHIVE_CLOSE_ERROR ("%s", this.archive.error_string ());
 		}
 	}
 }

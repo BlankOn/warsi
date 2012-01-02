@@ -20,9 +20,15 @@
  */
 
 using GLib;
+using Gee;
 
 private const string AVAILABLE_PACKAGES = "/var/lib/dpkg/available";
 private const string STATUS_PACKAGES 	= "/var/lib/dpkg/status";
+
+public struct PackageRow {
+	public string name;
+	public string version;
+}
 
 public class WarsiCatalog : GLib.Object {
 
@@ -30,11 +36,58 @@ public class WarsiCatalog : GLib.Object {
 
 	}
 
-	public available () {
+	public void synchronize () {
+			var file = File.new_for_path (AVAILABLE_PACKAGES);
+	 
+			if (!file.query_exists (null)) {
+				throw new WarsiCatalogError.CATALOG_OPEN_AVAILABLE_ERROR ("File '%s' doesn't exist.\n", file.get_path ());
+			}		
+
+			try {
+				var in_stream = new DataInputStream (file.read (null));
+				string line;
+
+				PackageRow row = PackageRow ();
+				var db = new WarsiDatabase ();
+				
+				while ((line = in_stream.read_line (null, null)) != null) {
+					if (line[0] != ' ') {
+						var str = line.split(": ");
+
+						switch (str[0]) {
+							case "Package":
+								row.name = str[1];
+								break;
+							case "Version":
+								row.version = str[1];
+								break;
+						}
+					}
+
+					db.sync (row);
+				}
+			} catch (IOError e) {
+				error ("%s", e.message);
+			}
+	}
+
+	public status () {
 
 	}
 
-	public check_status () {
+	public update_available () {
+
+	}
+
+	public update_status () {
+
+	}
+
+	public list_favorit () {
+
+	}
+
+	public list_available () {
 
 	}
 }

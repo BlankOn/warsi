@@ -65,33 +65,4 @@ public class WarsiDatabase : GLib.Object {
 			update (package);
 		}		
 	}
-
-	public void insert (PackageRow? package) {
-		int res = db.prepare_v2 ("INSERT INTO Packages (name, version) VALUES (?, ?)", -1, out stmt);
-		assert (res == Sqlite.OK);
-
-		res = stmt.bind_text (1, package.name);
-		assert (res == Sqlite.OK);
-		res = stmt.bind_text (2, package.version);
-		assert (res == Sqlite.OK);
-
-		res = stmt.step ();
-		if (res != Sqlite.DONE) {
-			stderr.printf ("Failed to insert data.");
-		}
-	}
-
-	public void update (PackageRow? package) {
-		int res = db.prepare_v2 ("UPDATE Packages SET version = ? WHERE name = ?", -1, out stmt);
-		assert (res == Sqlite.OK);
-
-		res = stmt.bind_text (1, package.version);
-		assert (res == Sqlite.OK);
-		res = stmt.bind_text (2, package.name);
-
-		res = stmt.step();
-        if (res != Sqlite.DONE) {
-			stderr.printf ("Failed to update data.");
-		}
-	}
 }

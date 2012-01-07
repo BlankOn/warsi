@@ -50,19 +50,24 @@ public class WarsiDatabase : GLib.Object {
 	}
 
 	public void sync (PackageRow? package) {
-		int res = db.prepare_v2 (
-            "SELECT version FROM Packages WHERE name=?", -1, out stmt);
-        assert(res == Sqlite.OK);
-        
-        res = stmt.bind_text(1, package.name);
-        assert(res == Sqlite.OK);
-        
-        if (stmt.step() != Sqlite.ROW) {
-        	insert (package);
-		}
+		int res = db.exec ("BEGIN TRANSACTION");
 
-		if (stmt.column_text(0) != package.version) {
-			update (package);
+		res = db.prepare_v2 ("REPLACE INTO Packages (name, version) VALUES (?, ?)", -1, out stmt);
+        assert(res == Sqlite.OK);
+        
+        res = stmt.bind_text (1, package.name);
+		assert (res == Sqlite.OK);
+		res = stmt.bind_text (2, package.version);
+		assert (res == Sqlite.OK);
+        
+        res = stmt.step ();
+		if (res != Sqlite.DONE) {
+			stderr.printf ("Failed to insert data.");
 		}		
+	}
+
+	public void finish_sync ()
+	{
+		res = db.exec ("COMMIT");
 	}
 }

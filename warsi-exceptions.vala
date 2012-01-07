@@ -25,3 +25,8 @@ public errordomain WarsiArchiveError {
 	ARCHIVE_FINISH_ERROR,
 	ARCHIVE_CLOSE_ERROR
 }
+
+public errordomain WarsiCatalogError {
+	CATALOG_OPEN_AVAILABLE_ERROR,
+	CATALOG_OPEN_STATUS_ERROR
+}

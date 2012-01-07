@@ -64,8 +64,11 @@ public class WarsiCatalog : GLib.Object {
 						}
 					}
 
-					db.sync (row);
+					if (line == "") {
+						db.sync (row);
+					}
 				}
+				db.finish_sync ();
 			} catch (IOError e) {
 				error ("%s", e.message);
 			}

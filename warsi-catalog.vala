@@ -22,7 +22,7 @@
 using GLib;
 using Gee;
 
-private const string AVAILABLE_PACKAGES = "/var/lib/dpkg/available";
+private const string PACKAGES_DIR 		= "/var/lib/apt/lists";
 private const string STATUS_PACKAGES 	= "/var/lib/dpkg/status";
 
 public struct PackageRow {
@@ -37,40 +37,48 @@ public class WarsiCatalog : GLib.Object {
 	}
 
 	public void synchronize () {
-			var file = File.new_for_path (AVAILABLE_PACKAGES);
-	 
-			if (!file.query_exists (null)) {
-				throw new WarsiCatalogError.CATALOG_OPEN_AVAILABLE_ERROR ("File '%s' doesn't exist.\n", file.get_path ());
-			}		
+			var directory 	= File.new_for_path (PACKAGES_DIR);
+			var enumerator 	= directory.enumerate_children (FILE_ATTRIBUTE_STANDARD_NAME, 0);
 
-			try {
-				var in_stream = new DataInputStream (file.read (null));
-				string line;
+			FileInfo file_info;
+			while ((file_info = enumerator.next_file ()) != null) {
+				if ("Packages" in file_info.get_name ()) {
+					var file = File.new_for_path ("%s/%s".printf (PACKAGES_DIR, file_info.get_name ()));
+			 
+					if (!file.query_exists (null)) {
+						throw new WarsiCatalogError.CATALOG_OPEN_AVAILABLE_ERROR ("File '%s' doesn't exist.\n", file.get_path ());
+					}		
 
-				PackageRow row = PackageRow ();
-				var db = new WarsiDatabase ();
+					try {
+						var in_stream = new DataInputStream (file.read (null));
+						string line;
+
+						PackageRow row = PackageRow ();
+						var db = new WarsiDatabase ();
 				
-				while ((line = in_stream.read_line (null, null)) != null) {
-					if (line[0] != ' ') {
-						var str = line.split(": ");
+						while ((line = in_stream.read_line (null, null)) != null) {
+							if (line[0] != ' ') {
+								var str = line.split(": ");
 
-						switch (str[0]) {
-							case "Package":
-								row.name = str[1];
-								break;
-							case "Version":
-								row.version = str[1];
-								break;
+								switch (str[0]) {
+									case "Package":
+										row.name = str[1];
+										break;
+									case "Version":
+										row.version = str[1];
+										break;
+								}
+							}
+
+							if (line == "") {
+								db.sync (row);
+							}
 						}
-					}
-
-					if (line == "") {
-						db.sync (row);
+						db.finish_sync ();
+					} catch (IOError e) {
+						error ("%s", e.message);
 					}
 				}
-				db.finish_sync ();
-			} catch (IOError e) {
-				error ("%s", e.message);
 			}
 	}
 

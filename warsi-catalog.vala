@@ -71,7 +71,9 @@ public class WarsiCatalog : GLib.Object {
                             }
 
                             if (line.length == 0) {
-                                db.insert (row);
+                                if (row.name.length != 0 && row.version.length != 0) {
+                                    db.insert (row);
+                                }
                             }
                         }
                         db.save ();

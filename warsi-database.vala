@@ -21,14 +21,14 @@
 
 using Sqlite;
 
-private const string WARSI_DB 			= "/var/lib/warsi/warsi.db";
+private const string WARSI_DB             = "/var/lib/warsi/warsi.db";
 
 public class WarsiDatabase : GLib.Object {
 
-	protected static Sqlite.Database db;
-	protected static Sqlite.Statement stmt;
+    protected static Sqlite.Database db;
+    protected static Sqlite.Statement stmt;
 
-	public WarsiDatabase () {
+    public WarsiDatabase () {
         int res = db.open_v2(WARSI_DB, out db, Sqlite.OPEN_READWRITE | Sqlite.OPEN_CREATE, 
             null);
 
@@ -36,38 +36,38 @@ public class WarsiDatabase : GLib.Object {
             stderr.printf ("Unable to open/create warsi database: %d, %s\n", res, db.errmsg ());
         }
 
-		Sqlite.Statement stmt;
+        Sqlite.Statement stmt;
         int res2 = db.prepare_v2("CREATE TABLE IF NOT EXISTS Packages ("
-					+ "name TEXT PRIMARY KEY, "
-					+ "version TEXT "
-					+ ")", -1, out stmt);
+                    + "name TEXT PRIMARY KEY, "
+                    + "version TEXT "
+                    + ")", -1, out stmt);
         assert(res2 == Sqlite.OK);
 
         res2 = stmt.step();
         if (res2 != Sqlite.DONE) {
-			stderr.printf ("Unable to create database's structur: %s\n", db.errmsg ());
-		}
-	}
+            stderr.printf ("Unable to create database's structur: %s\n", db.errmsg ());
+        }
+    }
 
-	public void sync (PackageRow? package) {
-		int res = db.exec ("BEGIN TRANSACTION");
+    public void sync (PackageRow? package) {
+        int res = db.exec ("BEGIN TRANSACTION");
 
-		res = db.prepare_v2 ("REPLACE INTO Packages (name, version) VALUES (?, ?)", -1, out stmt);
+        res = db.prepare_v2 ("REPLACE INTO Packages (name, version) VALUES (?, ?)", -1, out stmt);
         assert(res == Sqlite.OK);
         
         res = stmt.bind_text (1, package.name);
-		assert (res == Sqlite.OK);
-		res = stmt.bind_text (2, package.version);
-		assert (res == Sqlite.OK);
+        assert (res == Sqlite.OK);
+        res = stmt.bind_text (2, package.version);
+        assert (res == Sqlite.OK);
         
         res = stmt.step ();
-		if (res != Sqlite.DONE) {
-			stderr.printf ("Failed to insert data.");
-		}		
-	}
+        if (res != Sqlite.DONE) {
+            stderr.printf ("Failed to insert data.");
+        }        
+    }
 
-	public void finish_sync ()
-	{
-		res = db.exec ("COMMIT");
-	}
+    public void finish_sync ()
+    {
+        res = db.exec ("COMMIT");
+    }
 }

@@ -30,3 +30,8 @@ public errordomain WarsiCatalogError {
     CATALOG_OPEN_AVAILABLE_ERROR,
     CATALOG_OPEN_STATUS_ERROR
 }
+
+public errordomain WarsiDatabaseError {
+    DATABASE_PREPARE_ERROR,
+    DATABASE_INSERT_ERROR
+}

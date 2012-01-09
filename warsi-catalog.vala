@@ -36,7 +36,7 @@ public class WarsiCatalog : GLib.Object {
 
     }
 
-    public void synchronize () {
+    public void synchronize () throws WarsiCatalogError {
             var directory     = File.new_for_path (PACKAGES_DIR);
             var enumerator     = directory.enumerate_children (FILE_ATTRIBUTE_STANDARD_NAME, 0);
 
@@ -75,8 +75,8 @@ public class WarsiCatalog : GLib.Object {
                             }
                         }
                         db.save ();
-                    } catch (IOError e) {
-                        error ("%s", e.message);
+                    } catch (WarsiCatalogError e) {
+                        GLib.stderr.printf ("%s\n", e.message);
                     }
                 }
             }

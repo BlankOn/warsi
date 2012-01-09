@@ -29,19 +29,17 @@ public class WarsiDatabase : GLib.Object {
     private Sqlite.Statement stmt;
     private bool prepared = false;
 
-    public WarsiDatabase () {
-
-    }
-
-    public void prepare () throws WarsiDatabaseError {
+    public WarsiDatabase () throws WarsiDatabaseError {
         int res = db.open_v2(WARSI_DB, out db, Sqlite.OPEN_READWRITE | Sqlite.OPEN_CREATE, 
             null);
 
         if (res != Sqlite.OK) {
             throw new WarsiArchiveError.DATABASE_PREPARE_ERROR ("Unable to open/create warsi database: %d, %s\n", res, db.errmsg ());
         }
+    }
 
-        res = db.exec ("BEGIN TRANSACTION");
+    public void prepare () throws WarsiDatabaseError {
+        int res = db.exec ("BEGIN TRANSACTION");
 
         res = db.prepare_v2("CREATE TABLE IF NOT EXISTS Packages ("
                     + "name TEXT PRIMARY KEY, "

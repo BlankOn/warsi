@@ -41,6 +41,9 @@ public class WarsiCatalog : GLib.Object {
             var enumerator     = directory.enumerate_children (FILE_ATTRIBUTE_STANDARD_NAME, 0);
 
             FileInfo file_info;
+            var repo_index = 0;
+            var db = new WarsiDatabase ();
+
             while ((file_info = enumerator.next_file ()) != null) {
                 if ("Packages" in file_info.get_name ()) {
                     var file = File.new_for_path ("%s/%s".printf (PACKAGES_DIR, file_info.get_name ()));
@@ -49,13 +52,17 @@ public class WarsiCatalog : GLib.Object {
                         throw new WarsiCatalogError.CATALOG_OPEN_AVAILABLE_ERROR ("File '%s' doesn't exist.\n", file.get_path ());
                     }        
 
+                    PackageRow row = PackageRow ();
+                    db.prepare ();
+
+                    var timestamp = new DateTime.now_local ();
+
+                    db.insert_repository ((string) repo_index, file_info.get_name (), timestamp.to_string ());
+                    repo_index ++;
+
                     try {
                         var in_stream = new DataInputStream (file.read (null));
                         string line;
-
-                        PackageRow row = PackageRow ();
-                        var db = new WarsiDatabase ();
-                        db.prepare ();
 
                         while ((line = in_stream.read_line (null, null)) != null) {
                             if (line[0] != ' ') {
@@ -77,10 +84,10 @@ public class WarsiCatalog : GLib.Object {
                                 }
                             }
                         }
-                        db.save ();
                     } catch (WarsiCatalogError e) {
                         GLib.stderr.printf ("%s\n", e.message);
                     }
+                    db.save ();
                 }
             }
     }

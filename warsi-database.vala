@@ -34,7 +34,7 @@ public class WarsiDatabase : GLib.Object {
             null);
 
         if (res != Sqlite.OK) {
-            throw new WarsiArchiveError.DATABASE_PREPARE_ERROR ("Unable to open/create warsi database: %d, %s\n", res, db.errmsg ());
+            throw new WarsiDatabaseError.DATABASE_PREPARE_ERROR ("Unable to open/create warsi database: %d, %s\n", res, db.errmsg ());
         }
     }
 
@@ -47,12 +47,12 @@ public class WarsiDatabase : GLib.Object {
                     + ")", -1, out stmt);
 
         if (res != Sqlite.OK) {
-            throw new WarsiArchiveError.DATABASE_PREPARE_ERROR ("Unable to create database structure: %s\n", db.errmsg ());
+            throw new WarsiDatabaseError.DATABASE_PREPARE_ERROR ("Unable to create database structure: %s\n", db.errmsg ());
         }
 
         res = stmt.step();
         if (res != Sqlite.DONE) {
-            throw new WarsiArchiveError.DATABASE_PREPARE_ERROR ("Unable to create database structure: %s\n", db.errmsg ());
+            throw new WarsiDatabaseError.DATABASE_PREPARE_ERROR ("Unable to create database structure: %s\n", db.errmsg ());
         }
 
         prepared = true;
@@ -65,22 +65,22 @@ public class WarsiDatabase : GLib.Object {
 
         int res = db.prepare_v2 ("REPLACE INTO Packages (name, version) VALUES (?, ?)", -1, out stmt);
         if (res != Sqlite.OK) {
-            throw new WarsiArchiveError.DATABASE_INSERT_ERROR ("Unable to insert: %s\n", db.errmsg ());
+            throw new WarsiDatabaseError.DATABASE_INSERT_ERROR ("Unable to insert: %s\n", db.errmsg ());
         }
         
         res = stmt.bind_text (1, package.name);
         if (res != Sqlite.OK) {
-            throw new WarsiArchiveError.DATABASE_INSERT_ERROR ("Unable to insert: %s\n", db.errmsg ());
+            throw new WarsiDatabaseError.DATABASE_INSERT_ERROR ("Unable to insert: %s\n", db.errmsg ());
         }
 
         res = stmt.bind_text (2, package.version);
         if (res != Sqlite.OK) {
-            throw new WarsiArchiveError.DATABASE_INSERT_ERROR ("Unable to insert: %s\n", db.errmsg ());
+            throw new WarsiDatabaseError.DATABASE_INSERT_ERROR ("Unable to insert: %s\n", db.errmsg ());
         }
         
         res = stmt.step ();
         if (res != Sqlite.DONE) {
-            throw new WarsiArchiveError.DATABASE_INSERT_ERROR ("Unable to insert: %s\n", db.errmsg ());
+            throw new WarsiDatabaseError.DATABASE_INSERT_ERROR ("Unable to insert: %s\n", db.errmsg ());
         }        
     }
 

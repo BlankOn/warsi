@@ -49,7 +49,7 @@ public class WarsiDatabase : GLib.Object {
         }
     }
 
-    public void sync (PackageRow? package) {
+    public void insert (PackageRow? package) {
         int res = db.exec ("BEGIN TRANSACTION");
 
         res = db.prepare_v2 ("REPLACE INTO Packages (name, version) VALUES (?, ?)", -1, out stmt);
@@ -66,7 +66,7 @@ public class WarsiDatabase : GLib.Object {
         }        
     }
 
-    public void finish_sync ()
+    public void save ()
     {
         res = db.exec ("COMMIT");
     }

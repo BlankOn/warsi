@@ -70,11 +70,11 @@ public class WarsiCatalog : GLib.Object {
                                 }
                             }
 
-                            if (line == "") {
-                                db.sync (row);
+                            if (line.length == 0) {
+                                db.insert (row);
                             }
                         }
-                        db.finish_sync ();
+                        db.save ();
                     } catch (IOError e) {
                         error ("%s", e.message);
                     }

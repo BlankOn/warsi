@@ -55,7 +55,8 @@ public class WarsiCatalog : GLib.Object {
 
                         PackageRow row = PackageRow ();
                         var db = new WarsiDatabase ();
-                
+                        db.prepare ();
+
                         while ((line = in_stream.read_line (null, null)) != null) {
                             if (line[0] != ' ') {
                                 var str = line.split(": ");

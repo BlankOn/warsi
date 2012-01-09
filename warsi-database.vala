@@ -21,14 +21,19 @@
 
 using Sqlite;
 
-private const string WARSI_DB             = "/var/lib/warsi/warsi.db";
+private const string WARSI_DB   = "/var/lib/warsi/warsi.db";
 
 public class WarsiDatabase : GLib.Object {
 
-    protected static Sqlite.Database db;
-    protected static Sqlite.Statement stmt;
+    private Sqlite.Database db;
+    private Sqlite.Statement stmt;
+    private bool prepared = false;
 
-    public WarsiDatabase () throws WarsiDatabaseError {
+    public WarsiDatabase () {
+
+    }
+
+    public void prepare () throws WarsiDatabaseError {
         int res = db.open_v2(WARSI_DB, out db, Sqlite.OPEN_READWRITE | Sqlite.OPEN_CREATE, 
             null);
 
@@ -36,26 +41,31 @@ public class WarsiDatabase : GLib.Object {
             throw new WarsiArchiveError.DATABASE_PREPARE_ERROR ("Unable to open/create warsi database: %d, %s\n", res, db.errmsg ());
         }
 
-        Sqlite.Statement stmt;
-        int res2 = db.prepare_v2("CREATE TABLE IF NOT EXISTS Packages ("
+        res = db.exec ("BEGIN TRANSACTION");
+
+        res = db.prepare_v2("CREATE TABLE IF NOT EXISTS Packages ("
                     + "name TEXT PRIMARY KEY, "
                     + "version TEXT "
                     + ")", -1, out stmt);
 
-        if (res2 != Sqlite.OK) {
-            throw new WarsiArchiveError.DATABASE_PREPARE_ERROR ("Unable to create database structur: %s\n", db.errmsg ());
+        if (res != Sqlite.OK) {
+            throw new WarsiArchiveError.DATABASE_PREPARE_ERROR ("Unable to create database structure: %s\n", db.errmsg ());
         }
 
-        res2 = stmt.step();
-        if (res2 != Sqlite.DONE) {
-            throw new WarsiArchiveError.DATABASE_PREPARE_ERROR ("Unable to create database structur: %s\n", db.errmsg ());
+        res = stmt.step();
+        if (res != Sqlite.DONE) {
+            throw new WarsiArchiveError.DATABASE_PREPARE_ERROR ("Unable to create database structure: %s\n", db.errmsg ());
         }
+
+        prepared = true;
     }
 
-    public void insert (PackageRow? package) throws WarsiDatabaseError {
-        int res = db.exec ("BEGIN TRANSACTION");
+    public void insert (PackageRow package) throws WarsiDatabaseError {
+        if (!prepared) {
+            prepare ();
+        }
 
-        res = db.prepare_v2 ("REPLACE INTO Packages (name, version) VALUES (?, ?)", -1, out stmt);
+        int res = db.prepare_v2 ("REPLACE INTO Packages (name, version) VALUES (?, ?)", -1, out stmt);
         if (res != Sqlite.OK) {
             throw new WarsiArchiveError.DATABASE_INSERT_ERROR ("Unable to insert: %s\n", db.errmsg ());
         }
@@ -77,7 +87,10 @@ public class WarsiDatabase : GLib.Object {
     }
 
     public void save ()
-    {
-        res = db.exec ("COMMIT");
+    {        
+        if (prepared) {
+            int res = db.exec ("COMMIT");
+            prepared = false;
+        }
     }
 }

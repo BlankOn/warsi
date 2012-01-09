@@ -41,7 +41,6 @@ public class WarsiCatalog : GLib.Object {
             var enumerator     = directory.enumerate_children (FILE_ATTRIBUTE_STANDARD_NAME, 0);
 
             FileInfo file_info;
-            var repo_index = 0;
             var db = new WarsiDatabase ();
 
             while ((file_info = enumerator.next_file ()) != null) {
@@ -57,8 +56,7 @@ public class WarsiCatalog : GLib.Object {
 
                     var timestamp = new DateTime.now_local ();
 
-                    db.insert_repository ((string) repo_index, file_info.get_name (), timestamp.to_string ());
-                    repo_index ++;
+                    db.insert_repository (file_info.get_name (), timestamp.to_string ());
 
                     try {
                         var in_stream = new DataInputStream (file.read (null));

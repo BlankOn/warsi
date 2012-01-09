@@ -51,7 +51,7 @@ public class WarsiDatabase : GLib.Object {
         }
 
         res = db.prepare_v2("CREATE TABLE IF NOT EXISTS Repositories ("
-                    + "id TEXT PRIMARY KEY, "
+                    + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
                     + "repository TEXT, "
                     + "timestamp TEXT "
                     + ")", -1, out stmt);
@@ -94,27 +94,22 @@ public class WarsiDatabase : GLib.Object {
         }        
     }
 
-    public void insert_repository (string index, string repository, string timestamp) throws WarsiDatabaseError {
+    public void insert_repository (string repository, string timestamp) throws WarsiDatabaseError {
          if (!prepared) {
             prepare ();
         }
 
-        int res = db.prepare_v2 ("REPLACE INTO Repositories (id, repository, timestamp) VALUES (?, ?, ?)", -1, out stmt);
+        int res = db.prepare_v2 ("REPLACE INTO Repositories (id, repository, timestamp) VALUES (NULL, ?, ?)", -1, out stmt);
         if (res != Sqlite.OK) {
             throw new WarsiDatabaseError.DATABASE_INSERT_ERROR ("Unable to insert: %s\n", db.errmsg ());
         }
         
-        res = stmt.bind_text (1, index);
+        res = stmt.bind_text (1, repository);
         if (res != Sqlite.OK) {
             throw new WarsiDatabaseError.DATABASE_INSERT_ERROR ("Unable to insert: %s\n", db.errmsg ());
         }
 
-        res = stmt.bind_text (2, repository);
-        if (res != Sqlite.OK) {
-            throw new WarsiDatabaseError.DATABASE_INSERT_ERROR ("Unable to insert: %s\n", db.errmsg ());
-        }
-
-        res = stmt.bind_text (3, timestamp);
+        res = stmt.bind_text (2, timestamp);
         if (res != Sqlite.OK) {
             throw new WarsiDatabaseError.DATABASE_INSERT_ERROR ("Unable to insert: %s\n", db.errmsg ());
         }

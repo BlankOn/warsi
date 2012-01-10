@@ -43,7 +43,8 @@ public class WarsiDatabase : GLib.Object {
 
         res = db.prepare_v2("CREATE TABLE IF NOT EXISTS Packages ("
                     + "name TEXT PRIMARY KEY, "
-                    + "version TEXT "
+                    + "version TEXT, "
+                    + "repository INTEGER "
                     + ")", -1, out stmt);
 
         if (res != Sqlite.OK) {
@@ -73,34 +74,34 @@ public class WarsiDatabase : GLib.Object {
         res = db.prepare_v2("DELETE FROM Packages", -1, out stmt);
 
         if (res != Sqlite.OK) {
-            throw new WarsiDatabaseError.DATABASE_PREPARE_ERROR ("Unable to create database structure: %s\n", db.errmsg ());
+            throw new WarsiDatabaseError.DATABASE_PREPARE_ERROR ("Unable to delete old record: %s\n", db.errmsg ());
         }
 
         res = stmt.step();
         if (res != Sqlite.DONE) {
-            throw new WarsiDatabaseError.DATABASE_PREPARE_ERROR ("Unable to create database structure: %s\n", db.errmsg ());
+            throw new WarsiDatabaseError.DATABASE_PREPARE_ERROR ("Unable to delete old record: %s\n", db.errmsg ());
         }
 
         res = db.prepare_v2("DELETE FROM Repositories", -1, out stmt);
 
         if (res != Sqlite.OK) {
-            throw new WarsiDatabaseError.DATABASE_PREPARE_ERROR ("Unable to create database structure: %s\n", db.errmsg ());
+            throw new WarsiDatabaseError.DATABASE_PREPARE_ERROR ("Unable to delete old record: %s\n", db.errmsg ());
         }
 
         res = stmt.step();
         if (res != Sqlite.DONE) {
-            throw new WarsiDatabaseError.DATABASE_PREPARE_ERROR ("Unable to create database structure: %s\n", db.errmsg ());
+            throw new WarsiDatabaseError.DATABASE_PREPARE_ERROR ("Unable to delete old record: %s\n", db.errmsg ());
         }
 
         prepared = true;
     }
 
-    public void insert (PackageRow? package) throws WarsiDatabaseError {
+    public void insert (PackageRow package) throws WarsiDatabaseError {
         if (!prepared) {
             prepare ();
         }
 
-        int res = db.prepare_v2 ("REPLACE INTO Packages (name, version) VALUES (?, ?)", -1, out stmt);
+        int res = db.prepare_v2 ("REPLACE INTO Packages (name, version, repository) VALUES (?, ?, ?)", -1, out stmt);
         if (res != Sqlite.OK) {
             throw new WarsiDatabaseError.DATABASE_INSERT_ERROR ("Unable to insert: %s\n", db.errmsg ());
         }
@@ -114,6 +115,11 @@ public class WarsiDatabase : GLib.Object {
         if (res != Sqlite.OK) {
             throw new WarsiDatabaseError.DATABASE_INSERT_ERROR ("Unable to insert: %s\n", db.errmsg ());
         }
+
+        res = stmt.bind_int64 (3, package.repository);
+        if (res != Sqlite.OK) {
+            throw new WarsiDatabaseError.DATABASE_INSERT_ERROR ("Unable to insert: %s\n", db.errmsg ());
+        }
         
         res = stmt.step ();
         if (res != Sqlite.DONE) {
@@ -121,7 +127,7 @@ public class WarsiDatabase : GLib.Object {
         }        
     }
 
-    public void insert_repository (string repository, string timestamp) throws WarsiDatabaseError {
+    public int64 insert_repository (string repository, string timestamp) throws WarsiDatabaseError {
          if (!prepared) {
             prepare ();
         }
@@ -144,7 +150,9 @@ public class WarsiDatabase : GLib.Object {
         res = stmt.step ();
         if (res != Sqlite.DONE) {
             throw new WarsiDatabaseError.DATABASE_INSERT_ERROR ("Unable to insert: %s\n", db.errmsg ());
-        }        
+        }
+
+        return db.last_insert_rowid();    
     }
 
     public void save ()

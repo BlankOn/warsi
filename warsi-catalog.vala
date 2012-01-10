@@ -53,10 +53,9 @@ public class WarsiCatalog : GLib.Object {
                     }        
 
                     PackageRow row = PackageRow ();
-
                     var timestamp = new DateTime.now_local ();
-
-                    db.insert_repository (file_info.get_name (), timestamp.to_string ());
+                    var repo_id = db.insert_repository (file_info.get_name (), timestamp.to_string ());
+                    row.repository = repo_id;
 
                     try {
                         var in_stream = new DataInputStream (file.read (null));

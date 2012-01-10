@@ -28,10 +28,13 @@ private const string STATUS_PACKAGES      = "/var/lib/dpkg/status";
 public struct PackageRow {
     public string name;
     public string version;
+    public long offset;
     public int64 repository;
 }
 
 public class WarsiCatalog : GLib.Object {
+    
+    private long offset;
 
     public WarsiCatalog () {
 
@@ -61,6 +64,7 @@ public class WarsiCatalog : GLib.Object {
                     try {
                         var in_stream = new DataInputStream (file.read (null));
                         string line;
+                        offset = 0;
 
                         while ((line = in_stream.read_line (null, null)) != null) {
                             if (line[0] != ' ') {
@@ -76,8 +80,11 @@ public class WarsiCatalog : GLib.Object {
                                 }
                             }
 
+                            offset += line.length;
+
                             if (line.length == 0) {
                                 if (row.name.length != 0 && row.version.length != 0) {
+                                    row.offset = offset;
                                     db.insert (row);
                                 }
                             }

@@ -50,11 +50,38 @@ public class WarsiDatabase : GLib.Object {
             throw new WarsiDatabaseError.DATABASE_PREPARE_ERROR ("Unable to create database structure: %s\n", db.errmsg ());
         }
 
+        res = stmt.step();
+        if (res != Sqlite.DONE) {
+            throw new WarsiDatabaseError.DATABASE_PREPARE_ERROR ("Unable to create database structure: %s\n", db.errmsg ());
+        }
+
         res = db.prepare_v2("CREATE TABLE IF NOT EXISTS Repositories ("
                     + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + "repository TEXT, "
+                    + "repository TEXT UNIQUE, "
                     + "timestamp TEXT "
                     + ")", -1, out stmt);
+
+        if (res != Sqlite.OK) {
+            throw new WarsiDatabaseError.DATABASE_PREPARE_ERROR ("Unable to create database structure: %s\n", db.errmsg ());
+        }
+
+        res = stmt.step();
+        if (res != Sqlite.DONE) {
+            throw new WarsiDatabaseError.DATABASE_PREPARE_ERROR ("Unable to create database structure: %s\n", db.errmsg ());
+        }
+
+        res = db.prepare_v2("DELETE FROM Packages", -1, out stmt);
+
+        if (res != Sqlite.OK) {
+            throw new WarsiDatabaseError.DATABASE_PREPARE_ERROR ("Unable to create database structure: %s\n", db.errmsg ());
+        }
+
+        res = stmt.step();
+        if (res != Sqlite.DONE) {
+            throw new WarsiDatabaseError.DATABASE_PREPARE_ERROR ("Unable to create database structure: %s\n", db.errmsg ());
+        }
+
+        res = db.prepare_v2("DELETE FROM Repositories", -1, out stmt);
 
         if (res != Sqlite.OK) {
             throw new WarsiDatabaseError.DATABASE_PREPARE_ERROR ("Unable to create database structure: %s\n", db.errmsg ());
@@ -68,7 +95,7 @@ public class WarsiDatabase : GLib.Object {
         prepared = true;
     }
 
-    public void insert (PackageRow package) throws WarsiDatabaseError {
+    public void insert (PackageRow? package) throws WarsiDatabaseError {
         if (!prepared) {
             prepare ();
         }

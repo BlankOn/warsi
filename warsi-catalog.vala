@@ -36,12 +36,13 @@ public class WarsiCatalog : GLib.Object {
 
     }
 
-    public void synchronize () throws WarsiCatalogError {
+     public void synchronize () throws WarsiCatalogError {
             var directory     = File.new_for_path (PACKAGES_DIR);
             var enumerator     = directory.enumerate_children (FILE_ATTRIBUTE_STANDARD_NAME, 0);
 
             FileInfo file_info;
             var db = new WarsiDatabase ();
+            db.prepare ();
 
             while ((file_info = enumerator.next_file ()) != null) {
                 if ("Packages" in file_info.get_name ()) {
@@ -52,7 +53,6 @@ public class WarsiCatalog : GLib.Object {
                     }        
 
                     PackageRow row = PackageRow ();
-                    db.prepare ();
 
                     var timestamp = new DateTime.now_local ();
 
@@ -85,9 +85,9 @@ public class WarsiCatalog : GLib.Object {
                     } catch (WarsiCatalogError e) {
                         GLib.stderr.printf ("%s\n", e.message);
                     }
-                    db.save ();
                 }
             }
+            db.save ();
     }
 
     public status () {

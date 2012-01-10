@@ -28,6 +28,7 @@ private const string STATUS_PACKAGES      = "/var/lib/dpkg/status";
 public struct PackageRow {
     public string name;
     public string version;
+    public int64 repository;
 }
 
 public class WarsiCatalog : GLib.Object {

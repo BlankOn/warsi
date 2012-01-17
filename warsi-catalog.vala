@@ -28,21 +28,25 @@ private const string STATUS_PACKAGES      = "/var/lib/dpkg/status";
 public struct PackageRow {
     public string name;
     public string version;
+    public long offset;
+    public int64 repository;
 }
 
 public class WarsiCatalog : GLib.Object {
+    
+    private long offset;
 
     public WarsiCatalog () {
 
     }
 
-    public void synchronize () throws WarsiCatalogError {
+      public void synchronize () throws WarsiCatalogError {
             var directory     = File.new_for_path (PACKAGES_DIR);
             var enumerator     = directory.enumerate_children (FILE_ATTRIBUTE_STANDARD_NAME, 0);
 
             FileInfo file_info;
-            var repo_index = 0;
             var db = new WarsiDatabase ();
+            db.prepare ();
 
             while ((file_info = enumerator.next_file ()) != null) {
                 if ("Packages" in file_info.get_name ()) {
@@ -53,16 +57,14 @@ public class WarsiCatalog : GLib.Object {
                     }        
 
                     PackageRow row = PackageRow ();
-                    db.prepare ();
-
                     var timestamp = new DateTime.now_local ();
-
-                    db.insert_repository ((string) repo_index, file_info.get_name (), timestamp.to_string ());
-                    repo_index ++;
+                    var repo_id = db.insert_repository (file_info.get_name (), timestamp.to_string ());
+                    row.repository = repo_id;
 
                     try {
                         var in_stream = new DataInputStream (file.read (null));
                         string line;
+                        offset = 0;
 
                         while ((line = in_stream.read_line (null, null)) != null) {
                             if (line[0] != ' ') {
@@ -78,8 +80,11 @@ public class WarsiCatalog : GLib.Object {
                                 }
                             }
 
+                            offset += line.length + 1;
+
                             if (line.length == 0) {
                                 if (row.name.length != 0 && row.version.length != 0) {
+                                    row.offset = ("%xld").printf ((uint)offset);
                                     db.insert (row);
                                 }
                             }
@@ -87,9 +92,9 @@ public class WarsiCatalog : GLib.Object {
                     } catch (WarsiCatalogError e) {
                         GLib.stderr.printf ("%s\n", e.message);
                     }
-                    db.save ();
                 }
             }
+            db.save ();
     }
 
     public status () {

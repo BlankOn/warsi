@@ -44,7 +44,7 @@ public class WarsiDatabase : GLib.Object {
         res = db.prepare_v2("CREATE TABLE IF NOT EXISTS Packages ("
                     + "name TEXT PRIMARY KEY, "
                     + "version TEXT, "
-                    + "offset INTEGER, "
+                    + "offset TEXT, "
                     + "repository INTEGER "
                     + ")", -1, out stmt);
 
@@ -117,7 +117,7 @@ public class WarsiDatabase : GLib.Object {
             throw new WarsiDatabaseError.DATABASE_INSERT_ERROR ("Unable to insert: %s\n", db.errmsg ());
         }
 
-        res = stmt.bind_int64 (3, package.offset);
+        res = stmt.bind_text (3, package.offset);
         if (res != Sqlite.OK) {
             throw new WarsiDatabaseError.DATABASE_INSERT_ERROR ("Unable to insert: %s\n", db.errmsg ());
         }

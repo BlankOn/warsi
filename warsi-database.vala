@@ -201,15 +201,11 @@ public class WarsiDatabase : GLib.Object {
 		return all;
     }
 
-    public long get_list_size (string package = "") {
+    public long get_list_size (string package = "%") {
         int res;
 
-        if (package != "") {
-            res = db.prepare_v2 ("SELECT COUNT(name) FROM Packages WHERE name LIKE ?%", -1, out stmt);
-            res = stmt.bind_text (1, package);       
-        } else {
-            res = db.prepare_v2 ("SELECT COUNT(name) FROM Packages", -1, out stmt);     
-        }
+        res = db.prepare_v2 ("SELECT COUNT(name) FROM Packages WHERE name LIKE ?%", -1, out stmt);
+        res = stmt.bind_text (1, package);
         
         res = stmt.step();
         if (res != Sqlite.ROW) {

@@ -24,12 +24,20 @@ using Gee;
 
 private const string PACKAGES_DIR         = "/var/lib/apt/lists";
 private const string STATUS_PACKAGES      = "/var/lib/dpkg/status";
+private const long MAX_REC_PER_PAGE       = 100;
 
 public struct PackageRow {
     public string name;
     public string version;
-    public long offset;
+    public string offset;
     public int64 repository;
+}
+
+public struct PackageList {
+    public string name;
+    public string version;
+    public string offset;
+    public string repository;
 }
 
 public class WarsiCatalog : GLib.Object {
@@ -95,6 +103,20 @@ public class WarsiCatalog : GLib.Object {
                 }
             }
             db.save ();
+    }
+
+    public void list (string package = "", long start) throws WarsiCatalogError {
+        var db = new WarsiDatabase (); 
+        var packageslist = db.list (package, start, MAX_REC_PER_PAGE);
+ 
+        foreach ( PackageList? packagelist in packageslist ) {
+            stdout.printf ("%s -> %s -> %s\n", packagelist.name, packagelist.version, packagelist.repository);
+        }
+    }
+
+    public long get_size () {
+        var db = new WarsiDatabase ();
+        return db.get_list_size ();
     }
 
     public status () {

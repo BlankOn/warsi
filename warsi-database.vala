@@ -29,6 +29,8 @@ public class WarsiDatabase : GLib.Object {
     private Sqlite.Statement stmt;
     private bool prepared = false;
 
+    static WarsiDatabase _instance = null;
+
     public WarsiDatabase () throws WarsiDatabaseError {
         int res = db.open_v2(WARSI_DB, out db, Sqlite.OPEN_READWRITE | Sqlite.OPEN_CREATE, 
             null);
@@ -36,6 +38,14 @@ public class WarsiDatabase : GLib.Object {
         if (res != Sqlite.OK) {
             throw new WarsiDatabaseError.DATABASE_PREPARE_ERROR ("Unable to open/create warsi database: %d, %s\n", res, db.errmsg ());
         }
+    }
+
+    public static WarsiDatabase instance () {
+        if (_instance == null) {
+            _instance = new WarsiDatabase ();
+        }
+
+        return _instance;
     }
 
     public void prepare () throws WarsiDatabaseError {

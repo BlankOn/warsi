@@ -53,8 +53,7 @@ public class WarsiCatalog : GLib.Object {
             var enumerator     = directory.enumerate_children (FILE_ATTRIBUTE_STANDARD_NAME, 0);
 
             FileInfo file_info;
-            var db = new WarsiDatabase ();
-            db.prepare ();
+            WarsiDatabase.instance().prepare ();
 
             while ((file_info = enumerator.next_file ()) != null) {
                 if ("Packages" in file_info.get_name ()) {
@@ -66,7 +65,7 @@ public class WarsiCatalog : GLib.Object {
 
                     PackageRow row = PackageRow ();
                     var timestamp = new DateTime.now_local ();
-                    var repo_id = db.insert_repository (file_info.get_name (), timestamp.to_string ());
+                    var repo_id = WarsiDatabase.instance().insert_repository (file_info.get_name (), timestamp.to_string ());
                     row.repository = repo_id;
 
                     try {
@@ -93,7 +92,7 @@ public class WarsiCatalog : GLib.Object {
                             if (line.length == 0) {
                                 if (row.name.length != 0 && row.version.length != 0) {
                                     row.offset = ("%xld").printf ((uint)offset);
-                                    db.insert (row);
+                                    WarsiDatabase.instance().insert (row);
                                 }
                             }
                         }
@@ -102,12 +101,11 @@ public class WarsiCatalog : GLib.Object {
                     }
                 }
             }
-            db.save ();
+            WarsiDatabase.instance().save ();
     }
 
     public void list (string package = "", long start) throws WarsiCatalogError {
-        var db = new WarsiDatabase (); 
-        var packageslist = db.list (package, start, MAX_REC_PER_PAGE);
+        var packageslist = WarsiDatabase.instance().list (package, start, MAX_REC_PER_PAGE);
  
         foreach ( PackageList? packagelist in packageslist ) {
             stdout.printf ("%s -> %s -> %s\n", packagelist.name, packagelist.version, packagelist.repository);
@@ -115,8 +113,7 @@ public class WarsiCatalog : GLib.Object {
     }
 
     public long get_size () {
-        var db = new WarsiDatabase ();
-        return db.get_list_size ();
+        return WarsiDatabase.instance().get_list_size ();
     }
 
     public status () {

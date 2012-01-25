@@ -31,7 +31,7 @@ public class WarsiDatabase : GLib.Object {
 
     static WarsiDatabase _instance = null;
 
-    private WarsiDatabase () throws WarsiDatabaseError {
+    public WarsiDatabase () throws WarsiDatabaseError {
         int res = db.open_v2(WARSI_DB, out db, Sqlite.OPEN_READWRITE | Sqlite.OPEN_CREATE, 
             null);
 
@@ -225,5 +225,27 @@ public class WarsiDatabase : GLib.Object {
         }
         
         return stmt.column_int(0);
+    }
+
+    public PackageList? get_info (string name, string version) {
+        int res;
+
+        res = db.prepare_v2 ("SELECT name, version, offset, Repositories.repository as repository FROM Packages INNER JOIN Repositories ON Repositories.id=Packages.repository WHERE name = ? AND version = ?", -1, out stmt);
+	    res = stmt.bind_text (1, name);
+        res = stmt.bind_text (2, version);
+
+        if (res == 1) {
+            throw new WarsiDatabaseError.DATABASE_GETINFO_ERROR ("Unable to search: %s\n", db.errmsg ());
+        }
+
+        PackageList row = PackageList ();
+        if ((res = stmt.step ()) == Sqlite.ROW) {
+		    row.name = stmt.column_text (0);
+		    row.version = stmt.column_text (1);
+            row.offset = stmt.column_text (2);
+            row.repository = stmt.column_text (3);
+        }
+
+        return row;
     }
 }

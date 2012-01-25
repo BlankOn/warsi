@@ -33,5 +33,7 @@ public errordomain WarsiCatalogError {
 
 public errordomain WarsiDatabaseError {
     DATABASE_PREPARE_ERROR,
-    DATABASE_INSERT_ERROR
+    DATABASE_INSERT_ERROR,
+    DATABASE_LIST_ERROR,
+    DATABASE_GETINFO_ERROR
 }

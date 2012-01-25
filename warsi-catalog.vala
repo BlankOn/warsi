@@ -126,6 +126,15 @@ public class WarsiCatalog : GLib.Object {
         return WarsiDatabase.instance().get_list_size ();
     }
 
+    public string get_info (string name, string version) {
+        var packagerow = WarsiDatabase.instance().get_info (name, version);
+
+        string package = "{ 'name' : '%s', 'version' : '%s', 'offset' : '%s', 'repository' : '%s' }"
+        .printf (packagerow.name, packagerow.version, packagerow.offset, packagerow.repository);
+
+        return package;
+    }
+
     public status () {
 
     }

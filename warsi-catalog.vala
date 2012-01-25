@@ -112,10 +112,10 @@ public class WarsiCatalog : GLib.Object {
         packages += "[\n";
         foreach ( PackageList? packagelist in packageslist ) {
             if (need_comma) packages += ",\n";
-            packages += " { 'name' : '" + "%s".printf (packagelist.name) + "',\n";
-            packages += " 'version' : '" + "%s".printf (packagelist.version) + "',\n";
-            packages += " 'version' : '" + "%s".printf (packagelist.offset) + "',\n";
-            packages += " 'repository' : '" + "%s".printf (packagelist.repository) + "' }";
+            packages += " { 'name' : '%s',\n".printf (packagelist.name);
+            packages += " 'version' : '%s',\n".printf (packagelist.version);
+            packages += " 'offset' : '%s',\n".printf (packagelist.offset);
+            packages += " 'repository' : '%s',\n".printf (packagelist.repository);
             need_comma = true;
         }
         packages += "]";

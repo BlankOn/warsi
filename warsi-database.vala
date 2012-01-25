@@ -31,7 +31,7 @@ public class WarsiDatabase : GLib.Object {
 
     static WarsiDatabase _instance = null;
 
-    public WarsiDatabase () throws WarsiDatabaseError {
+    private WarsiDatabase () throws WarsiDatabaseError {
         int res = db.open_v2(WARSI_DB, out db, Sqlite.OPEN_READWRITE | Sqlite.OPEN_CREATE, 
             null);
 

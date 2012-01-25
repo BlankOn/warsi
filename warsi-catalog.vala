@@ -104,12 +104,22 @@ public class WarsiCatalog : GLib.Object {
             WarsiDatabase.instance().save ();
     }
 
-    public void list (string package = "", long start) throws WarsiCatalogError {
+    public string list (string package = "", long start) throws WarsiCatalogError {
+        string packages = "";
+        bool need_comma = false;
         var packageslist = WarsiDatabase.instance().list (package, start, MAX_REC_PER_PAGE);
- 
+         
+        packages += "[\n";
         foreach ( PackageList? packagelist in packageslist ) {
-            stdout.printf ("%s -> %s -> %s\n", packagelist.name, packagelist.version, packagelist.repository);
+            if (need_comma) packages += ",\n";
+            packages += " { 'name' : '" + "%s".printf (packagelist.name) + "',\n";
+            packages += " 'version' : '" + "%s".printf (packagelist.version) + "',\n";
+            packages += " 'version' : '" + "%s".printf (packagelist.offset) + "',\n";
+            packages += " 'repository' : '" + "%s".printf (packagelist.repository) + "' }";
+            need_comma = true;
         }
+        packages += "]";
+        return packages;
     }
 
     public long get_size () {

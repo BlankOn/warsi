@@ -29,6 +29,8 @@ public class WarsiDatabase : GLib.Object {
     private Sqlite.Statement stmt;
     private bool prepared = false;
 
+    static WarsiDatabase _instance = null;
+
     public WarsiDatabase () throws WarsiDatabaseError {
         int res = db.open_v2(WARSI_DB, out db, Sqlite.OPEN_READWRITE | Sqlite.OPEN_CREATE, 
             null);
@@ -36,6 +38,14 @@ public class WarsiDatabase : GLib.Object {
         if (res != Sqlite.OK) {
             throw new WarsiDatabaseError.DATABASE_PREPARE_ERROR ("Unable to open/create warsi database: %d, %s\n", res, db.errmsg ());
         }
+    }
+
+    public static WarsiDatabase instance () {
+        if (_instance == null) {
+            _instance = new WarsiDatabase ();
+        }
+
+        return _instance;
     }
 
     public void prepare () throws WarsiDatabaseError {
@@ -167,5 +177,75 @@ public class WarsiDatabase : GLib.Object {
             int res = db.exec ("COMMIT");
             prepared = false;
         }
+    }
+
+    public Gee.ArrayList<PackageList?> list (string package = "", long start, long length) {
+        int res;
+
+        if (package != "") {
+            res = db.prepare_v2 ("SELECT name, version, offset, Repositories.repository as repository FROM Packages INNER JOIN Repositories ON Repositories.id=Packages.repository WHERE name LIKE ?% LIMIT ? OFFSET ?", -1, out stmt);
+		    res = stmt.bind_text (1, package);
+            res = stmt.bind_int64 (2, length);
+            res = stmt.bind_int64 (3, start);   
+        } else {
+            res = db.prepare_v2 ("SELECT name, version, offset, Repositories.repository as repository FROM Packages INNER JOIN Repositories ON Repositories.id=Packages.repository LIMIT ? OFFSET ?", -1, out stmt);
+            res = stmt.bind_int64 (1, length);
+            res = stmt.bind_int64 (2, start);
+        }
+
+		Gee.ArrayList<PackageList?> all = new Gee.ArrayList<PackageList?> ();
+
+		if ( res == 1 ) {
+            throw new WarsiDatabaseError.DATABASE_LIST_ERROR ("Unable to list packages: %s\n", db.errmsg ());
+		} else {
+			while (( res = stmt.step() ) == Sqlite.ROW) {
+				PackageList row = PackageList ();
+				row.name = stmt.column_text (0);
+				row.version = stmt.column_text (1);
+                row.offset = stmt.column_text (2);
+                row.repository = stmt.column_text (3);
+
+				all.add (row);
+			}
+		}
+		return all;
+    }
+
+    public long get_list_size (string package = "%") {
+        int res;
+
+        res = db.prepare_v2 ("SELECT COUNT(name) FROM Packages WHERE name LIKE ?%", -1, out stmt);
+        res = stmt.bind_text (1, package);
+        
+        res = stmt.step();
+        if (res != Sqlite.ROW) {
+            throw new WarsiDatabaseError.DATABASE_LIST_ERROR ("Unable to retrieve row count on Packages: (%d) %s\n", res, db.errmsg());
+            
+            return 0;
+        }
+        
+        return stmt.column_int(0);
+    }
+
+    public PackageList? get_info (string name, string version) {
+        int res;
+
+        res = db.prepare_v2 ("SELECT name, version, offset, Repositories.repository as repository FROM Packages INNER JOIN Repositories ON Repositories.id=Packages.repository WHERE name = ? AND version = ?", -1, out stmt);
+	    res = stmt.bind_text (1, name);
+        res = stmt.bind_text (2, version);
+
+        if (res == 1) {
+            throw new WarsiDatabaseError.DATABASE_GETINFO_ERROR ("Unable to search: %s\n", db.errmsg ());
+        }
+
+        PackageList row = PackageList ();
+        if ((res = stmt.step ()) == Sqlite.ROW) {
+		    row.name = stmt.column_text (0);
+		    row.version = stmt.column_text (1);
+            row.offset = stmt.column_text (2);
+            row.repository = stmt.column_text (3);
+        }
+
+        return row;
     }
 }

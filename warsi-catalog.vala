@@ -24,12 +24,20 @@ using Gee;
 
 private const string PACKAGES_DIR         = "/var/lib/apt/lists";
 private const string STATUS_PACKAGES      = "/var/lib/dpkg/status";
+private const long MAX_REC_PER_PAGE       = 100;
 
 public struct PackageRow {
     public string name;
     public string version;
-    public long offset;
+    public string offset;
     public int64 repository;
+}
+
+public struct PackageList {
+    public string name;
+    public string version;
+    public string offset;
+    public string repository;
 }
 
 public class WarsiCatalog : GLib.Object {
@@ -45,8 +53,7 @@ public class WarsiCatalog : GLib.Object {
             var enumerator     = directory.enumerate_children (FILE_ATTRIBUTE_STANDARD_NAME, 0);
 
             FileInfo file_info;
-            var db = new WarsiDatabase ();
-            db.prepare ();
+            WarsiDatabase.instance().prepare ();
 
             while ((file_info = enumerator.next_file ()) != null) {
                 if ("Packages" in file_info.get_name ()) {
@@ -58,7 +65,7 @@ public class WarsiCatalog : GLib.Object {
 
                     PackageRow row = PackageRow ();
                     var timestamp = new DateTime.now_local ();
-                    var repo_id = db.insert_repository (file_info.get_name (), timestamp.to_string ());
+                    var repo_id = WarsiDatabase.instance().insert_repository (file_info.get_name (), timestamp.to_string ());
                     row.repository = repo_id;
 
                     try {
@@ -85,7 +92,7 @@ public class WarsiCatalog : GLib.Object {
                             if (line.length == 0) {
                                 if (row.name.length != 0 && row.version.length != 0) {
                                     row.offset = ("%xld").printf ((uint)offset);
-                                    db.insert (row);
+                                    WarsiDatabase.instance().insert (row);
                                 }
                             }
                         }
@@ -94,7 +101,38 @@ public class WarsiCatalog : GLib.Object {
                     }
                 }
             }
-            db.save ();
+            WarsiDatabase.instance().save ();
+    }
+
+    public string list (string package = "", long start) throws WarsiCatalogError {
+        string packages = "";
+        bool need_comma = false;
+        var packageslist = WarsiDatabase.instance().list (package, start, MAX_REC_PER_PAGE);
+         
+        packages += "[\n";
+        foreach ( PackageList? packagelist in packageslist ) {
+            if (need_comma) packages += ",\n";
+            packages += " { 'name' : '%s',\n".printf (packagelist.name);
+            packages += " 'version' : '%s',\n".printf (packagelist.version);
+            packages += " 'offset' : '%s',\n".printf (packagelist.offset);
+            packages += " 'repository' : '%s',\n".printf (packagelist.repository);
+            need_comma = true;
+        }
+        packages += "]";
+        return packages;
+    }
+
+    public long get_size () {
+        return WarsiDatabase.instance().get_list_size ();
+    }
+
+    public string get_info (string name, string version) {
+        var packagerow = WarsiDatabase.instance().get_info (name, version);
+
+        string package = "{ 'name' : '%s', 'version' : '%s', 'offset' : '%s', 'repository' : '%s' }"
+        .printf (packagerow.name, packagerow.version, packagerow.offset, packagerow.repository);
+
+        return package;
     }
 
     public status () {
